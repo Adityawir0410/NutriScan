@@ -1,12 +1,18 @@
 package com.example.nutriscan.navigation
 
-// Definisikan semua rute/layar di aplikasi Anda
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
     object Login : Screen("login")
     object Register : Screen("register")
+
+    // Ini adalah layar pembungkus utama (yang punya bottom bar)
+    object MainApp : Screen("main_app")
+
+    // Ini adalah sub-layar di dalam Bottom Bar
     object Home : Screen("home")
-    // Nanti kita bisa tambahkan layar lain di sini,
-    // misalnya Screen.ScanResult
+    object History : Screen("history")
+    object Scan : Screen("scan")
+    object Notification : Screen("notification")
+    object Profile : Screen("profile")
 }

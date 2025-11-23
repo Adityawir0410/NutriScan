@@ -2,6 +2,7 @@ package com.example.nutriscan.domain.repository
 
 import com.example.nutriscan.domain.model.User
 import kotlinx.coroutines.flow.Flow
+import com.example.nutriscan.domain.common.Result
 
 // Ini adalah "Kontrak" atau "Aturan"
 // Kita belum menulis kodenya (itu di layer Data),
