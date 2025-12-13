@@ -34,6 +34,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -77,13 +78,23 @@ fun ScanScreen(
 
     // --- Launcher untuk Izin Kamera ---
     var hasCameraPermission by remember { mutableStateOf(false) }
-    val permissionLauncher = rememberLauncherForActivityResult(
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted -> hasCameraPermission = granted }
     )
+    
+    // --- Launcher untuk Izin Lokasi ---
+    var hasLocationPermission by remember { mutableStateOf(false) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted -> hasLocationPermission = granted }
+    )
 
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(Manifest.permission.CAMERA)
+        // Request camera permission
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        // Request location permission (untuk tracking lokasi saat scan)
+        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     if (hasCameraPermission) {
@@ -119,6 +130,7 @@ fun ScanScreen(
                 FoodResultCard(
                     data = foodData,
                     imageBitmap = capturedImage,
+                    locationAddress = (state as? ScanState.Success)?.locationAddress,
                     onScanAgain = { viewModel.resetState() }
                 )
             }
@@ -278,6 +290,7 @@ fun CameraView(
 fun FoodResultCard(
     data: com.example.nutriscan.ui.screens.scan.FoodResult,
     imageBitmap: Bitmap,
+    locationAddress: String? = null,
     onScanAgain: () -> Unit
 ) {
     Card(
@@ -413,9 +426,45 @@ fun FoodResultCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // 5. TOMBOL AKSI
+            // 5. LOKASI SCAN (jika tersedia)
+            if (!locationAddress.isNullOrEmpty()) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Lokasi",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "Lokasi scan:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = locationAddress,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // 6. TOMBOL AKSI
             Button(
                 onClick = onScanAgain,
                 modifier = Modifier.fillMaxWidth().height(50.dp),

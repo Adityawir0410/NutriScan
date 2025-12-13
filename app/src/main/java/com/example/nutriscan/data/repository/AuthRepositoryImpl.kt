@@ -1,5 +1,7 @@
 package com.example.nutriscan.data.repository
 
+import android.util.Log
+import com.example.nutriscan.data.datastore.UserPreferencesManager
 import com.example.nutriscan.domain.common.Result
 import com.example.nutriscan.domain.model.User
 import com.example.nutriscan.domain.repository.AuthRepository
@@ -10,31 +12,35 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 
 class AuthRepositoryImpl @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val userPreferences: UserPreferencesManager,
+    private val historyRepository: HistoryRepository // Inject HistoryRepository
 ) : AuthRepository {
 
     // Fungsi untuk register
-    override fun register(email: String, pass: String): Flow<Result<User>> = flow { // ✅ BENAR
-        // Ini adalah Coroutine (Modul 5) [cite: 682]
+    override fun register(email: String, pass: String): Flow<Result<User>> = flow {
         try {
-            // 1. Kirim status Loading
             emit(Result.Loading())
 
-            // 2. Coba buat user baru di Firebase
             val authResult = auth.createUserWithEmailAndPassword(email, pass).await()
             val firebaseUser = authResult.user
 
             if (firebaseUser != null) {
-                // 3. Jika sukses, kirim data User
+                // Save login state to DataStore
+                userPreferences.saveLoginState(firebaseUser.uid, firebaseUser.email)
+                Log.d("AuthRepo", "✅ Login state saved to DataStore")
+                
                 emit(Result.Success(User(uid = firebaseUser.uid, email = firebaseUser.email)))
             } else {
                 emit(Result.Error("Gagal membuat user."))
             }
 
         } catch (e: Exception) {
-            // 3. Jika gagal (misal: email sudah terdaftar), kirim pesan error
             emit(Result.Error(e.message ?: "Error tidak diketahui"))
         }
     }
@@ -42,22 +48,32 @@ class AuthRepositoryImpl @Inject constructor(
     // Fungsi untuk login
     override fun login(email: String, pass: String): Flow<Result<User>> = flow {
         try {
-            // 1. Kirim status Loading
             emit(Result.Loading())
 
-            // 2. Coba login ke Firebase
-            val authResult = auth.signInWithEmailAndPassword(email, pass).await() // Modul 5 [cite: 667] (await)
+            val authResult = auth.signInWithEmailAndPassword(email, pass).await()
             val firebaseUser = authResult.user
 
             if (firebaseUser != null) {
-                // 3. Jika sukses, kirim data User
+                // Save login state to DataStore
+                userPreferences.saveLoginState(firebaseUser.uid, firebaseUser.email)
+                Log.d("AuthRepo", "✅ Login state saved to DataStore")
+                
+                // Sync Room Database with Firebase on every login
+                try {
+                    historyRepository.syncFromFirestore()
+                    userPreferences.saveLastSyncTimestamp(System.currentTimeMillis())
+                    Log.d("AuthRepo", "✅ Room Database synced with Firebase")
+                } catch (e: Exception) {
+                    Log.e("AuthRepo", "⚠️ Room sync failed (offline?): ${e.message}")
+                    // Don't fail login if sync fails (might be offline)
+                }
+                
                 emit(Result.Success(User(uid = firebaseUser.uid, email = firebaseUser.email)))
             } else {
                 emit(Result.Error("Gagal login."))
             }
 
         } catch (e: Exception) {
-            // 3. Jika gagal (misal: password salah), kirim pesan error
             emit(Result.Error(e.message ?: "Error tidak diketahui"))
         }
     }
@@ -75,8 +91,12 @@ class AuthRepositoryImpl @Inject constructor(
 
     // Fungsi untuk logout
     override suspend fun logout() {
-        // Jalankan di thread IO (Modul 5)
         withContext(Dispatchers.IO) {
+            // Clear DataStore login state
+            userPreferences.clearLoginState()
+            Log.d("AuthRepo", "✅ Login state cleared from DataStore")
+            
+            // Sign out from Firebase
             auth.signOut()
         }
     }

@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
+    id("kotlin-parcelize")
     alias(libs.plugins.google.services)
     id("com.google.dagger.hilt.android")
 }
@@ -29,11 +30,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "GEMINI_API_KEY", localProperties.getProperty("GEMINI_API_KEY"))
-
-        // TAMBAHKAN DUA INI:
-        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", localProperties.getProperty("CLOUDINARY_CLOUD_NAME"))
-        buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", localProperties.getProperty("CLOUDINARY_UPLOAD_PRESET"))
+        
+        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+        val cloudinaryCloudName = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: ""
+        val cloudinaryUploadPreset = localProperties.getProperty("CLOUDINARY_UPLOAD_PRESET") ?: ""
+        
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
+        buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"$cloudinaryUploadPreset\"")
     }
 
     buildTypes {
@@ -56,6 +60,7 @@ android {
         compose = true
         buildConfig = true
     }
+    buildToolsVersion = "36.0.0"
 }
 
 dependencies {
@@ -101,9 +106,14 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+    
+    // DataStore for persistent login
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    
     implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -65,11 +66,18 @@ fun HistoryScreen(
             is HistoryState.Success -> {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    // Tambahkan padding bawah agar item terakhir tidak tertutup BottomBar
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     items(currentState.data) { historyItem ->
-                        HistoryItemCard(historyItem)
+                        HistoryItemCard(
+                            item = historyItem,
+                            onClick = {
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("scanHistory", historyItem)
+                                navController.navigate(com.example.nutriscan.navigation.Screen.HistoryDetail.route)
+                            }
+                        )
                     }
                 }
             }
@@ -78,12 +86,16 @@ fun HistoryScreen(
 }
 
 @Composable
-fun HistoryItemCard(item: ScanHistory) {
+fun HistoryItemCard(
+    item: ScanHistory,
+    onClick: () -> Unit = {}
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -139,6 +151,28 @@ fun HistoryItemCard(item: ScanHistory) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
+                }
+                
+                // Show location icon if location data exists
+                if (item.latitude != null && item.longitude != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Ada lokasi",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = item.locationAddress?.take(30) ?: "Lokasi tersimpan",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }

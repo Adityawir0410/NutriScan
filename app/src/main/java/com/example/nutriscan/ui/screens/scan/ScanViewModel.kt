@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nutriscan.data.location.LocationHelper
 import com.example.nutriscan.data.repository.HistoryRepository
 import com.example.nutriscan.domain.common.Result
 import com.example.nutriscan.domain.repository.ScanRepository
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ScanViewModel @Inject constructor(
     private val repository: ScanRepository,
-    private val historyRepository: HistoryRepository // Inject HistoryRepository
+    private val historyRepository: HistoryRepository,
+    private val locationHelper: LocationHelper // Inject LocationHelper
 ) : ViewModel() {
 
     private val _scanState = MutableStateFlow<ScanState>(ScanState.Idle)
@@ -43,18 +45,31 @@ class ScanViewModel @Inject constructor(
                                 gizi = jsonObject.optString("gizi", "-")
                             )
 
-                            // 2. Update UI State (Sertakan Bitmap agar bisa ditampilkan di kartu)
-                            _scanState.value = ScanState.Success(foodData, bitmap)
-
-                            // 3. Simpan ke Firebase History (Background Process)
+                            // 2. Ambil lokasi dan update UI
                             launch(Dispatchers.IO) {
                                 try {
-                                    Log.d("ScanVM", "Mulai upload ke Firebase...") // <-- TAMBAH LOG INI
-                                    historyRepository.saveScanResult(bitmap, foodData)
-                                    Log.d("ScanVM", "BERHASIL SIMPAN KE HISTORY! ✅") // <-- TAMBAH LOG INI
+                                    Log.d("ScanVM", "Mulai get location...")
+                                    val locationData = locationHelper.getCurrentLocation()
+                                    
+                                    if (locationData != null) {
+                                        Log.d("ScanVM", "Location berhasil: ${locationData.latitude}, ${locationData.longitude}")
+                                        Log.d("ScanVM", "Address: ${locationData.address}")
+                                    } else {
+                                        Log.d("ScanVM", "Location unavailable or permission not granted")
+                                    }
+                                    
+                                    // Update UI State dengan location address
+                                    _scanState.value = ScanState.Success(foodData, bitmap, locationData?.address)
+                                    
+                                    // Simpan ke Firebase History di background
+                                    Log.d("ScanVM", "Mulai upload ke Firebase...")
+                                    historyRepository.saveScanResult(bitmap, foodData, locationData)
+                                    Log.d("ScanVM", "BERHASIL SIMPAN KE HISTORY! ✅")
                                 } catch (e: Exception) {
-                                    Log.e("ScanVM", "GAGAL SIMPAN: ${e.message}") // <-- CEK ERROR DISINI
+                                    Log.e("ScanVM", "Error: ${e.message}")
                                     e.printStackTrace()
+                                    // Tetap tampilkan hasil scan meski tanpa lokasi
+                                    _scanState.value = ScanState.Success(foodData, bitmap, null)
                                 }
                             }
 
@@ -78,8 +93,8 @@ class ScanViewModel @Inject constructor(
 sealed class ScanState {
     object Idle : ScanState()
     object Loading : ScanState()
-    // Update: Tambahkan 'image: Bitmap' di sini
-    data class Success(val data: FoodResult, val image: Bitmap) : ScanState()
+    // Update: Tambahkan 'image: Bitmap' dan 'locationAddress' di sini
+    data class Success(val data: FoodResult, val image: Bitmap, val locationAddress: String? = null) : ScanState()
     data class Error(val message: String) : ScanState()
 }
 

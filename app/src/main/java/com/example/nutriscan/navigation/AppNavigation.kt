@@ -11,6 +11,7 @@ import com.example.nutriscan.ui.screens.onboarding.OnboardingScreen
 import com.example.nutriscan.ui.screens.register.RegisterScreen
 import com.example.nutriscan.ui.screens.scan.ScanScreen // Import ScanScreen di sini
 import com.example.nutriscan.ui.screens.splash.SplashScreen
+import com.example.nutriscan.ui.screens.history.HistoryDetailScreen
 
 @Composable
 fun AppNavigation() {
@@ -40,6 +41,17 @@ fun AppNavigation() {
         composable(Screen.MainApp.route) {
             // Kita kirim navController root ke dalam MainScreen
             MainScreen(rootNavController = navController)
+        }
+
+        // RUTE HISTORY DETAIL (Full Screen tanpa Bottom Bar)
+        composable(Screen.HistoryDetail.route) { backStackEntry ->
+            val scanHistory = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<com.example.nutriscan.domain.model.ScanHistory>("scanHistory")
+            
+            scanHistory?.let {
+                HistoryDetailScreen(navController = navController, scanHistory = it)
+            }
         }
 
         // RUTE SCAN PINDAH KE SINI (Di luar MainScreen)

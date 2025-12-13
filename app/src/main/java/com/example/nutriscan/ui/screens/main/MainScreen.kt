@@ -48,7 +48,7 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen(bottomNavController) }
-            composable(Screen.History.route) { HistoryScreen(bottomNavController) }
+            composable(Screen.History.route) { HistoryScreen(navController = rootNavController) }
             // 3. HAPUS RUTE SCAN DARI SINI (composable(Screen.Scan.route) { ... })
             composable(Screen.Notification.route) { NotificationScreen(bottomNavController) }
             composable(Screen.Profile.route) { ProfileScreen(bottomNavController) }

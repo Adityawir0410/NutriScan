@@ -12,6 +12,7 @@ sealed class Screen(val route: String) {
     // Ini adalah sub-layar di dalam Bottom Bar
     object Home : Screen("home")
     object History : Screen("history")
+    object HistoryDetail : Screen("history_detail")
     object Scan : Screen("scan")
     object Notification : Screen("notification")
     object Profile : Screen("profile")
