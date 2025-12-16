@@ -1,6 +1,7 @@
 package com.example.nutriscan.ui.screens.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +9,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Help
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,10 +22,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.nutriscan.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
+
+// --- PALET WARNA ---
+private val PrimaryGreen = Color(0xFF388E3C)
+private val LightGreenBg = Color(0xFFE8F5E9)
+private val TextDark = Color(0xFF1F2937)
+private val TextGrey = Color(0xFF6B7280)
+private val DangerColor = Color(0xFFEF4444) // Merah untuk Logout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,8 +44,8 @@ fun ProfileScreen(
     val logoutState by viewModel.logoutState.collectAsState()
     val currentUser = FirebaseAuth.getInstance().currentUser
     var showLogoutDialog by remember { mutableStateOf(false) }
-    
-    // Handle logout success
+
+    // Efek saat Logout Sukses
     LaunchedEffect(logoutState) {
         if (logoutState is LogoutState.Success) {
             navController.navigate(Screen.Login.route) {
@@ -41,68 +54,57 @@ fun ProfileScreen(
             viewModel.resetLogoutState()
         }
     }
-    
-    // Logout Bottom Sheet
+
+    // --- LOGOUT BOTTOM SHEET ---
     if (showLogoutDialog) {
         ModalBottomSheet(
             onDismissRequest = { showLogoutDialog = false },
             containerColor = Color.White,
-            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+            dragHandle = { BottomSheetDefaults.DragHandle() },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Handle bar
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.Gray.copy(alpha = 0.3f))
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Icon
+                // Icon Logout Besar
                 Box(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Color.Gray.copy(alpha = 0.1f)),
+                        .background(Color(0xFFFEE2E2)), // Merah Sangat Muda
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        imageVector = Icons.Default.ExitToApp,
                         contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = Color.Gray
+                        modifier = Modifier.size(36.dp),
+                        tint = DangerColor
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 Text(
-                    text = "Apakah Anda yakin ingin keluar?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    text = "Konfirmasi Logout",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = TextDark
                 )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "Dengan keluar, Anda akan mengakhiri sesi saat ini dan tidak lagi memiliki akses ke akun Anda.",
+                    text = "Apakah Anda yakin ingin keluar dari akun ini? Sesi Anda akan berakhir.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
+                    color = TextGrey,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
-                // Logout button
+
+                // Tombol Logout (Merah)
                 Button(
                     onClick = {
                         showLogoutDialog = false
@@ -111,247 +113,234 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFF3B30)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
+                    shape = RoundedCornerShape(16.dp),
                     enabled = logoutState !is LogoutState.Loading
                 ) {
                     if (logoutState is LogoutState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                     } else {
                         Text(
-                            text = "Keluar",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "Ya, Keluar",
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
-                // Cancel button
+
+                // Tombol Batal
                 TextButton(
                     onClick = { showLogoutDialog = false },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
                         text = "Batal",
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF6366F1)
+                        color = TextGrey
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
-    
+
+    // --- KONTEN UTAMA ---
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F7F9))
+            .background(Color.White) // Background Putih
             .verticalScroll(rememberScrollState())
     ) {
-        // Profile Header
-        Surface(
-            color = Color.White,
-            shadowElevation = 2.dp,
-            modifier = Modifier.fillMaxWidth()
+        // 1. PROFILE HEADER
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 40.dp, bottom = 30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            // Avatar dengan Border Hijau
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .size(110.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, PrimaryGreen, CircleShape)
+                    .padding(4.dp) // Gap antara border dan foto
+                    .clip(CircleShape)
+                    .background(LightGreenBg),
+                contentAlignment = Alignment.Center
             ) {
-                // Avatar
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF6366F1)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = currentUser?.email?.first()?.uppercase() ?: "U",
-                        style = MaterialTheme.typography.displayMedium,
+                Text(
+                    text = currentUser?.email?.first()?.uppercase() ?: "U",
+                    style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = PrimaryGreen
                     )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = currentUser?.email?.split("@")?.get(0)?.replaceFirstChar { it.uppercase() } ?: "User",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Text(
-                    text = currentUser?.email ?: "user@example.com",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedButton(
-                    onClick = { /* Navigate to edit profile */ },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF6366F1)
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF6366F1))
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Edit Profil")
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Menu Section
-        Surface(
-            color = Color.White,
-            shadowElevation = 1.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                ProfileMenuItem(
-                    icon = Icons.Default.Notifications,
-                    title = "Notifikasi",
-                    subtitle = "Kelola preferensi notifikasi",
-                    onClick = { /* Navigate to notification settings */ }
-                )
-                
-                Divider(color = Color.Gray.copy(alpha = 0.2f))
-                
-                ProfileMenuItem(
-                    icon = Icons.Default.Security,
-                    title = "Privasi & Keamanan",
-                    subtitle = "Pengaturan privasi dan keamanan",
-                    onClick = { /* Navigate to privacy settings */ }
-                )
-                
-                Divider(color = Color.Gray.copy(alpha = 0.2f))
-                
-                ProfileMenuItem(
-                    icon = Icons.Default.Help,
-                    title = "Bantuan & Dukungan",
-                    subtitle = "FAQ dan hubungi kami",
-                    onClick = { /* Navigate to help */ }
-                )
-                
-                Divider(color = Color.Gray.copy(alpha = 0.2f))
-                
-                ProfileMenuItem(
-                    icon = Icons.Default.Info,
-                    title = "Tentang Aplikasi",
-                    subtitle = "Versi 1.0.0",
-                    onClick = { /* Navigate to about */ }
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = currentUser?.email?.split("@")?.get(0)?.replaceFirstChar { it.uppercase() } ?: "Pengguna",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
+            )
+
+            Text(
+                text = currentUser?.email ?: "email@example.com",
+                style = MaterialTheme.typography.bodyMedium.copy(color = TextGrey)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Tombol Edit Profil
+            OutlinedButton(
+                onClick = { /* Navigasi ke Edit Profil */ },
+                shape = RoundedCornerShape(50),
+                border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryGreen),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryGreen)
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Edit Profil", fontWeight = FontWeight.SemiBold)
+            }
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Logout Button
+
+        Divider(color = Color(0xFFF3F4F6), thickness = 8.dp) // Pemisah Section Tebal
+
+        // 2. MENU OPTIONS
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text(
+                text = "Pengaturan Akun",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = TextDark),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Outlined.Notifications,
+                title = "Notifikasi",
+                onClick = { /* Navigate */ }
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Outlined.Lock,
+                title = "Keamanan & Privasi",
+                onClick = { /* Navigate */ }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Lainnya",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = TextDark),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Outlined.Help,
+                title = "Bantuan & Dukungan",
+                onClick = { /* Navigate */ }
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Outlined.Info,
+                title = "Tentang Aplikasi",
+                onClick = { /* Navigate */ },
+                isLastItem = true // Item terakhir tidak perlu divider
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 3. TOMBOL LOGOUT (Di paling bawah)
         Button(
             onClick = { showLogoutDialog = true },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF3B30)
+                containerColor = Color(0xFFFEE2E2), // Merah Muda
+                contentColor = DangerColor
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(16.dp),
+            elevation = ButtonDefaults.buttonElevation(0.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = null
-            )
+            Icon(Icons.Default.ExitToApp, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Keluar dari Akun",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Keluar", fontWeight = FontWeight.Bold)
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
+
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// --- KOMPONEN ITEM MENU ---
 @Composable
 fun ProfileMenuItem(
     icon: ImageVector,
     title: String,
-    subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isLastItem: Boolean = false
 ) {
-    Surface(
-        onClick = onClick,
-        color = Color.Transparent
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+    Column {
+        Surface(
+            onClick = onClick,
+            color = Color.Transparent,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF6366F1).copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color(0xFF6366F1),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
+                // Icon dalam Lingkaran
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF9FAFB)), // Abu sangat muda
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = TextDark,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = TextDark
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = Color.LightGray
                 )
             }
-            
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color.Gray
-            )
+        }
+
+        // Garis pemisah antar item (Kecuali item terakhir)
+        if (!isLastItem) {
+            HorizontalDivider(color = Color(0xFFF3F4F6), modifier = Modifier.padding(start = 60.dp))
         }
     }
 }
