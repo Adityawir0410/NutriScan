@@ -69,8 +69,11 @@ class HomeViewModel @Inject constructor(
                                 Log.d("HomeVM", "Sample scan: ${scan.nama}, date=${scan.date}, gizi=${scan.gizi}")
                             }
                             
-                            // TEMPORARY: Calculate metrics from ALL scans to debug
-                            val metrics = calculateMetrics(allScans)
+                            // Filter hanya scan hari ini
+                            val todayScans = filterTodayScans(allScans)
+                            
+                            // Calculate metrics HANYA dari scan hari ini
+                            val metrics = calculateMetrics(todayScans)
                             
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
